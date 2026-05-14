@@ -8,6 +8,19 @@ When your ChatGPT account hits its usage limit, `codex-rotator` quietly swaps to
 
 > For developers who own multiple ChatGPT accounts and want uninterrupted Codex sessions — without the paranoia of getting flagged.
 
+## Why not just swap manually or write a script?
+
+| | Manual swap | Naive rotation script | **codex-rotator** |
+|---|---|---|---|
+| **How quota is detected** | You notice it broke | Polls the API repeatedly until it gets a 429 | One minimal probe per interval |
+| **API call volume** | Zero (but you do the work) | High — bursts of requests to detect exhaustion | One request per 60s, zero if not needed |
+| **Account flag risk** | None | High — rapid polling matches abuse patterns | Designed to avoid flagged behavior |
+| **Credential handling** | You edit files by hand | Varies — often hardcoded or stored insecurely | Local only, `0600` permissions, official OAuth |
+| **Automation** | None | Fragile — breaks on API changes | systemd service, restarts automatically |
+| **Interrupts your session?** | Yes, every time | No, but may get you rate-limited | No |
+
+The naive script approach trades one problem (manual work) for a worse one: hammering the API to detect quota exhaustion is exactly the pattern that triggers rate limiting and account flags. `codex-rotator` solves this at the design level — it probes once, acts only when necessary, and is otherwise silent.
+
 ## Is it safe?
 
 **Will I get banned for using this?**
