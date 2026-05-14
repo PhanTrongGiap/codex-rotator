@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          go build -trimpath -o codex-rotator-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/codex-rotator
+
+      - name: Checksum
+        run: sha256sum codex-rotator-${{ matrix.goos }}-${{ matrix.goarch }} >> checksums.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: codex-rotator-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            codex-rotator-${{ matrix.goos }}-${{ matrix.goarch }}
+            checksums.txt
+
+  publish:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Combine checksums
+        run: |
+          cat dist/checksums.txt | sort -u > checksums.txt
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            dist/codex-rotator-linux-amd64 \
+            dist/codex-rotator-linux-arm64 \
+            dist/codex-rotator-darwin-amd64 \
+            dist/codex-rotator-darwin-arm64 \
+            checksums.txt

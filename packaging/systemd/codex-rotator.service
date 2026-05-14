@@ -1,0 +1,12 @@
+[Unit]
+Description=codex-rotator token rotation daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/codex-rotator daemon --interval 1m
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

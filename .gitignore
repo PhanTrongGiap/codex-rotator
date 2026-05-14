@@ -1,0 +1,21 @@
+# Local build outputs
+/codex-rotator
+*.exe
+*.test
+*.out
+
+# Go workspace and coverage files
+/coverage.txt
+/coverage.out
+/dist/
+
+# Local credentials and auth pools
+.codex/
+.codex-rotator/
+auth.json
+codex-*.json
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
